@@ -34,25 +34,24 @@ main: la	$a0, intro	# print intro
       li	$v0, 4
 	  syscall
 
-loop: la	$a0, req	# request value of n
+loop: la	$a0, req	# request value of x
 	  li	$v0, 4
 	  syscall
 	  
-	  li	$v0, 5		# read value of n
+	  li	$v0, 7		# read value of x
 	  syscall
-	  
-      slti	$t0, $v0, 999	# if n is 999, exit
-	  beq	$t0, $zero, out
-	  
-	  move	$s2, $v0	# save value of n
+
+      l.d     $f16, flag  # exit if 999 was entered
+      c.eq.d  $f16, $f0
+      bc1t    out
 	  
 	  la	$a0, ans	# print text part of answer
 	  li	$v0, 4
 	  syscall
 
-      move	$a0, $s0
-	  li	$v0, 1		# print value of n
-	  syscall
+      li	$v0, 3
+      mov.d $f12, $f0   # display value of x
+      syscall
 
       la	$a0, cr	    # print text part of answer
 	  li	$v0, 4
@@ -83,3 +82,4 @@ req:   .asciiz  "\nEnter a value for x (or 999 to exit): "
 ans:   .asciiz  "Our approximation for e^"
 cr:    .asciiz  " is "
 adios: .asciiz  "Come back soon!\n"
+flag:  .double   999.00
