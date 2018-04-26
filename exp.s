@@ -10,24 +10,33 @@
 #   $f2 floating point calculations
 #	$f12 floating point return
 
-exp:	
-      li	$t0, 1		# initialize product to 1.0
-	  mtc1	$t0, $f0
-	  cvt.d.w	$f0, $f0
+exp:
+      l.d   $f2, cons0       # $f2 = 0.0
+      l.d   $f4, cons1       # $f4 = 1.0
+      l.d   $f6, conse	     # $f6 = 1.0e-15
+
+      mov.d $f8, $f12        # save exponent entered
+      mov.d $f10, $f12       # second copy of term 
+      abs.d $f8, $f8         # get absolute value
+
+      l.d   $f20, cons1      # set n to 1
+      div.d $f14, $f8, $f20   # divide x by n
+      add.d $f18, $f4, $f14   # add term 0(1) to x/n
 
 again:
-      slti	$t0, $a0, 2		# test for n < 2
-	  bne	$t0, $zero,done	# if n < 2, return
+      add.d $f20, $f20, $f4  # add 1 to n
+      mul.d $f14, $f14, $f8  # multiply old term by x
+      div.d $f14, $f14, $f20 # divide by incremented n
 
-	  mtc1	$a0, $f2		# move n to floating register
-	  cvt.d.w	$f2, $f2		# and convert to double precision
+      c.lt.d $f14, $f6       # compare term to 1.0e-15
+      bc1t   done
 
-	  mul.d	$f0, $f0, $f2	# multiply product by n
-	
-	  addi	$a0, $a0, -1	# decrease n
+      add.d $f18, $f18, $f14 # add result into total
+
 	  j	again		# and loop
 
 done:
+      mov.d     $f0, $f18    # move into return
  	  jr	    $ra		# return to calling routine
 
 main: la	$a0, intro	# print intro
@@ -57,17 +66,21 @@ loop: la	$a0, req	# request value of x
 	  li	$v0, 4
 	  syscall
 
-      move	$a0, $s2	# place value of n in $a0
+      #move	$a0, $s2	# place value of n in $a0
 	  
-	  jal	exp		# call exp function
+	  jal	exp		    # call exp function
 	  
-	  move  $s1, $v0	# save value returned by fact
+	  #move  $s1, $v0	# save value returned by fact
 
-	  li	$v0, 3      # prepare to read out double prec value
+	  #li	$v0, 3      # prepare to read out double prec value
+	  #mov.d $f12, $f0   # move into FP return register
+	  #syscall
+
+      li	$v0, 3      # prepare to read out double prec value
 	  mov.d $f12, $f0   # move into FP return register
 	  syscall
 	  
-	  j	loop	# branch back and next value of n
+	  j	loop	        # branch back and next value of n
 
 out:  la	$a0, adios	# display closing
 	  li	$v0, 4
@@ -83,3 +96,6 @@ ans:   .asciiz  "Our approximation for e^"
 cr:    .asciiz  " is "
 adios: .asciiz  "Come back soon!\n"
 flag:  .double   999.00
+cons0: .double   0.00
+cons1: .double   1.00
+conse: .double   1.0e-15
